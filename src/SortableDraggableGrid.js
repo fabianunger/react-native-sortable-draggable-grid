@@ -7,21 +7,18 @@ class SortableDraggableGrid extends Component {
         const { width, height } = Dimensions.get('window');
         this.state = {
             cards: [
-                { key: 1, title: 'asd' },
-                { key: 2, title: 'asd' },
-                { key: 2, title: 'asd' }
+                { key: 1, title: 'card1' },
+                { key: 2, title: 'card2' },
+                { key: 3, title: 'card3' }
             ],
             dndEnabled: true,
         };
     }
 
-
     render() {
         return (
-            <View
-                style={styles.container}
-            >
-                <Text>Grid</Text>
+            <View style={styles.container}>
+                <Text>Sortable Grid coming up!</Text>
             </View>
         );
     }
@@ -30,9 +27,8 @@ class SortableDraggableGrid extends Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        width: '100%',
-        height: '100%',
-
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
 
