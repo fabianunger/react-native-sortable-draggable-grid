@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Dimensions, PanResponder, StyleSheet, View,LayoutAnimation} from 'react-native';
+import { Dimensions, LayoutAnimation, PanResponder, StyleSheet, View } from 'react-native';
 import Card from './Card';
-import { isPointWithinArea , moveArrayElement} from './_helpers/helpers';
+import { isPointWithinArea, moveArrayElement } from './_helpers/helpers';
 
 class SortableDraggableGrid extends Component {
     static defaultProps = {
@@ -15,31 +15,26 @@ class SortableDraggableGrid extends Component {
         super(props);
         const { width, height } = Dimensions.get('window');
         this.state = {
-            cards: [
-                { key: 1, title: '1' },
-                { key: 2, title: '2' },
-                { key: 3, title: '3' },
-                { key: 4, title: '4' },
-                { key: 5, title: '5' },
-                { key: 6, title: '6' },
-                { key: 7, title: '7' },
-                { key: 8, title: '8' },
-                { key: 9, title: '9' },
-                { key: 10, title: '10' },
-            ],
+            cards: [],
             dndEnabled: true,
         };
     }
 
     componentWillMount() {
         this.panResponder = this.createPanResponder();
+        this.setState({
+            cards: this.props.gridItems
+        })
+
     }
+
     componentWillUpdate() {
         LayoutAnimation.configureNext({
             ...LayoutAnimation.Presets.easeInEaseOut,
             duration: this.props.animationDuration
         });
     }
+
     createPanResponder = () => PanResponder.create({
         // Handle drag gesture
         onMoveShouldSetPanResponder: (_, gestureState) => this.onMoveShouldSetPanResponder(gestureState),
@@ -67,21 +62,20 @@ class SortableDraggableGrid extends Component {
 
 
         this.setState((state) => {
-            const draggedCardIndex = this.state.cards.findIndex(({ key }) => key === draggedCard.key);
-            const anotherCardIndex = this.state.cards.findIndex(({ key }) => key === anotherCard.key);
+            const draggedCardIndex = this.props.gridItems.findIndex(({ key }) => key === draggedCard.key);
+            const anotherCardIndex = this.props.gridItems.findIndex(({ key }) => key === anotherCard.key);
 
             //old version TODO: Adapt
 
             // console.log("just before moveArrayElement", this.state.newCardList);
 
             const newList = moveArrayElement(
-                this.state.cards,
+                this.props.gridItems,
                 draggedCardIndex,
                 anotherCardIndex,
             );
             this.setState({ cards: newList });
-
-
+            this.props.updateGrid(newList)
 
             this.setState({ dndEnabled: false });
             // return {};
@@ -91,28 +85,7 @@ class SortableDraggableGrid extends Component {
     onPanResponderEnd = () => {
         this.updateCardState(this.cardBeingDragged, { isBeingDragged: false });
         this.cardBeingDragged = undefined;
-        console.log('card is beeing gragged: FALSE');
-
-        // HERE UPDATE FIREBASE BY CHECKING THE INDEXES OF THE ARRAY AND UPDATING THE CARDINDEX OF EACH CARD  - CARDINDEX = NEW Object Array Index
-
-        // console.log(this.state.tempSortableContent);
-        // this.props.triggerSetSortContent(this.state.tempSortableContent);
-        //
-        // this.setState({
-        //     cards:
-        // })
-
-        // const listArr = this.props.sortableContent;
-        // console.log("listArr onPanResponderEnd", listArr);
-        // const userRef = firebase.database().ref("users").child(firebase.auth().currentUser.uid);
-
-        // listArr.forEach(c => {
-        //   // console.log("index of "+ c.key.toString() + "    is "+ listArr.indexOf(c));
-        //   userRef
-        //     .child('versions').child(this.props.activeVersion).child("pages").child('content').child(this.props.currentPage).child("cards").child(c.key.toString()).update({i: listArr.indexOf(c)});
-        //
-        //
-        // });
+      console.log("end!")
     };
     onPanResponderGrant = () => {
         this.updateCardState(this.cardBeingDragged, { isBeingDragged: true });
@@ -146,28 +119,28 @@ class SortableDraggableGrid extends Component {
         return false;
     };
 
-    findCardAtCoordinates = (x, y, exceptCard) => this.state.cards.find(
+    findCardAtCoordinates = (x, y, exceptCard) => this.props.gridItems.find(
         (card) =>
             card.tlX && card.tlY && card.brX && card.brY
             && isPointWithinArea(x, y, card.tlX, card.tlY, card.brX, card.brY)
             && (!exceptCard || exceptCard.key !== card.key)
     )
     updateCardState = (Card, props) => {
-        const index = this.state.cards.findIndex(({ key }) => key === Card.key);
+        const index = this.props.gridItems.findIndex(({ key }) => key === Card.key);
 
         // console.log("index...", index);
 
         const ReCards = [
-            ...this.state.cards.slice(0, index),
+            ...this.props.gridItems.slice(0, index),
             {
-                ...this.state.cards[index],
+                ...this.props.gridItems[index],
                 ...props,
             },
-            ...this.state.cards.slice(index + 1),
+            ...this.props.gridItems.slice(index + 1),
         ];
 
         this.setState({ cards: ReCards });
-
+        this.props.updateGrid(ReCards)
 
     };
     onRenderCard = (card,
@@ -188,8 +161,9 @@ class SortableDraggableGrid extends Component {
             <View style={styles.container}
                   {...this.panResponder.panHandlers}
             >
+
                 {/*<Text>{this.props.animationDuration}</Text>*/}
-                {this.state.cards.map((card, index) => {
+                {this.props.gridItems.map((card, index) => {
                     return <Card onRenderCard={this.onRenderCard} card={card} key={card.key} title={card.title}/>
                 })}
             </View>
