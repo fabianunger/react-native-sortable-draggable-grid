@@ -5,6 +5,7 @@ import SortableDraggableGrid from './src/SortableDraggableGrid';
 export default function App() {
     return (
         <View style={styles.container}>
+            {/*<Text style={styles.text}>Test</Text>*/}
             <SortableDraggableGrid/>
         </View>
     );
@@ -13,8 +14,12 @@ export default function App() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'khaki',
         alignItems: 'center',
         justifyContent: 'center',
     },
+    text: {
+        color: 'black',
+        fontSize: 20
+    }
 });

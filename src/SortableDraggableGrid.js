@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Dimensions, StyleSheet, View, } from 'react-native';
+import { Dimensions, StyleSheet, View,Text } from 'react-native';
 import Card from './Card';
 
 class SortableDraggableGrid extends Component {
@@ -13,14 +13,23 @@ class SortableDraggableGrid extends Component {
                 { key: 3, title: '3' },
                 { key: 4, title: '4' },
                 { key: 5, title: '5' },
+                { key: 6, title: '6' },
+                { key: 7, title: '7' },
+                { key: 8, title: '8' },
+                { key: 9, title: '9' },
+                { key: 10, title: '10' },
             ],
             dndEnabled: true,
         };
     }
-
+    static defaultProps = {
+        animationDuration: 400
+        // animationDuration: 250
+    };
     render() {
         return (
             <View style={styles.container}>
+                {/*<Text>{this.props.animationDuration}</Text>*/}
                 {this.state.cards.map((card, index) => {
                     return <Card key={index} title={card.title}/>
                 })}
