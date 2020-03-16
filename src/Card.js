@@ -1,14 +1,16 @@
 import React from 'react';
-import { StyleSheet, Text, View, } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PropTypes from 'prop-types';
 
 const Card = ({ title }) => {
     return (
-        <View style={styles.container}>
+        <TouchableOpacity onPress={() => {
+            console.log(title)
+        }} style={styles.container}>
             <View style={styles.wrapper}>
                 <Text style={styles.title}>{title}</Text>
             </View>
-        </View>
+        </TouchableOpacity>
     )
 }
 
