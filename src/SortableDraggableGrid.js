@@ -41,7 +41,7 @@ class SortableDraggableGrid extends Component {
     onMoveShouldSetPanResponder = (gestureState) => {
 
         const { dx, dy, moveX, moveY, numberActiveTouches } = gestureState;
-        console.log(dx, dy, moveX, moveY, numberActiveTouches )
+        console.log(dx, dy, moveX, moveY, numberActiveTouches)
         // Do not set pan responder if a multi touch gesture is occurring
         if (numberActiveTouches !== 1) {
             return false;
@@ -54,9 +54,11 @@ class SortableDraggableGrid extends Component {
 
         // Find the card below user's finger at given coordinates
         const card = this.findCardAtCoordinates(moveX, moveY);
+        console.log(card)
         if (card) {
             // assign it to `this.cardBeingDragged` while dragging
             this.cardBeingDragged = card;
+
             // and tell PanResponder to start handling the gesture by calling `onPanResponderMove`
             return true;
         }
@@ -70,6 +72,39 @@ class SortableDraggableGrid extends Component {
             && isPointWithinArea(x, y, card.tlX, card.tlY, card.brX, card.brY)
             && (!exceptCard || exceptCard.key !== card.key)
     )
+    updateCardState = (Card, props) => {
+        const index = this.state.cards.findIndex(({ key }) => key === Card.key);
+
+        // console.log("index...", index);
+
+        const ReCards = [
+            ...this.state.cards.slice(0, index),
+            {
+                ...this.state.cards[index],
+                ...props,
+            },
+            ...this.state.cards.slice(index + 1),
+        ];
+        // console.log("ReCards",ReCards);
+        //old version TODO: Adapt
+        // this.props.onReorderCards(ReCards);
+        this.setState({ cards: ReCards });
+        // this.props.triggerSetSortContent(ReCards);
+        // console.log("ReCards - updateCardState");
+
+    };
+    onRenderCard = (card,
+                    screenX,
+                    screenY,
+                    width,
+                    height) => {
+        this.updateCardState(card, {
+            tlX: screenX,
+            tlY: screenY,
+            brX: screenX + width,
+            brY: screenY + height,
+        });
+    };
 
     render() {
         return (
@@ -78,7 +113,7 @@ class SortableDraggableGrid extends Component {
             >
                 {/*<Text>{this.props.animationDuration}</Text>*/}
                 {this.state.cards.map((card, index) => {
-                    return <Card key={index} title={card.title}/>
+                    return <Card onRenderCard={this.onRenderCard} card={card} key={card.key} title={card.title}/>
                 })}
             </View>
         );

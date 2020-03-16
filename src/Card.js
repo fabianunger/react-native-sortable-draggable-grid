@@ -1,17 +1,46 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PropTypes from 'prop-types';
 
-const Card = ({ title }) => {
-    return (
-        <TouchableOpacity onPress={() => {
-            console.log(title)
-        }} style={styles.container}>
-            <View style={styles.wrapper}>
-                <Text style={styles.title}>{title}</Text>
-            </View>
-        </TouchableOpacity>
-    )
+
+class Card extends Component {
+
+    constructor(props) {
+        super(props);
+
+    }
+    onLayout = () => {
+
+            this.container && this.container.measure(this.onMeasure);
+
+    };
+    onMeasure = (x,
+                 y,
+                 width,
+                 height,
+                 screenX,
+                 screenY) => {
+        this.props.onRenderCard(this.props.card, screenX, screenY, width, height);
+    };
+    render() {
+        const { title } = this.props
+        return (
+            <TouchableOpacity
+                style={styles.container}
+                onPress={() => {
+                    console.log(title)
+                }}
+                ref={el => this.container = el}
+                onLayout={this.onLayout}
+            >
+                <View style={styles.wrapper}>
+                    <Text style={styles.title}>{title}</Text>
+                </View>
+            </TouchableOpacity>
+        )
+    }
+
+
 }
 
 const styles = StyleSheet.create({
