@@ -1,97 +1,77 @@
-import React, { Component } from 'react';
-import { Dimensions, LayoutAnimation, PanResponder, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { LayoutAnimation, PanResponder, StyleSheet, Text, View } from 'react-native';
 import Card from './Card';
-import { isPointWithinArea, moveArrayElement } from './_helpers/helpers';
+import { isPointWithinArea } from './_helpers/helpers';
 
-class SortableDraggableGrid extends Component {
-    static defaultProps = {
-        animationDuration: 400
-        // animationDuration: 250
-    };
+export default function SortableDraggableGrid(props) {
 
-    cardBeingDragged
+    const [dndEnabled, setDndEnabled] = useState(true)
+    const [cardBeingDragged,setCardBeingDragged] = useState(undefined)
 
-    constructor(props) {
-        super(props);
-        const { width, height } = Dimensions.get('window');
-        this.state = {
-            cards: [],
-            dndEnabled: true,
-        };
-    }
-
-    componentWillMount() {
-        this.panResponder = this.createPanResponder();
-        this.setState({
-            cards: this.props.gridItems
-        })
-
-    }
-
-    componentWillUpdate() {
+    useEffect(() => {
         LayoutAnimation.configureNext({
             ...LayoutAnimation.Presets.easeInEaseOut,
-            duration: this.props.animationDuration
+            // TODO: Make Duration Customizable
+            duration: 400
         });
-    }
-
-    createPanResponder = () => PanResponder.create({
-        // Handle drag gesture
-        onMoveShouldSetPanResponder: (_, gestureState) => this.onMoveShouldSetPanResponder(gestureState),
-        onPanResponderGrant: (_, gestureState) => this.onPanResponderGrant(),
-        onPanResponderMove: (_, gestureState) => this.onPanResponderMove(gestureState),
+        console.log('useEffect!')
     });
-    onPanResponderMove = (gestureState) => {
+
+
+    const createPanResponder = () => PanResponder.create({
+        // Handle drag gesture
+        onMoveShouldSetPanResponder: (_, gestureState) => onMoveShouldSetPanResponder(gestureState),
+        onPanResponderGrant: (_, gestureState) => onPanResponderGrant(),
+        onPanResponderMove: (_, gestureState) => onPanResponderMove(gestureState),
+    });
+    const panResponder = createPanResponder();
+    const onPanResponderMove = (gestureState) => {
         const { moveX, moveY } = gestureState;
-        if (!this.state.dndEnabled) {
+        if (!dndEnabled) {
             return;
         }
         // Find the card we're dragging the current card over
-        const draggedOverCard = this.findCardAtCoordinates(moveX, moveY, this.cardBeingDragged);
+        const draggedOverCard = findCardAtCoordinates(moveX, moveY, cardBeingDragged);
         if (draggedOverCard) {
-            this.swapCards(this.cardBeingDragged, draggedOverCard);
+            swapCards(cardBeingDragged, draggedOverCard);
         }
     };
-    enableDnd = () => {
-        this.setState({ dndEnabled: true });
+    const enableDnd = () => {
+        setDndEnabled(true)
     };
-    enableDndAfterAnimating = () => {
-        setTimeout(this.enableDnd, this.props.animationDuration);
+    const enableDndAfterAnimating = () => {
+        setTimeout(enableDnd, props.animationDuration);
     };
-    swapCards = (draggedCard, anotherCard) => {
+    const swapCards = (draggedCard, anotherCard) => {
+
+        console.log(props.gridItems, 'TTT')
+
+        const draggedCardIndex = props.gridItems.findIndex(({ key }) => key === draggedCard.key);
+        const anotherCardIndex = props.gridItems.findIndex(({ key }) => key === anotherCard.key);
 
 
-        this.setState((state) => {
-            const draggedCardIndex = this.props.gridItems.findIndex(({ key }) => key === draggedCard.key);
-            const anotherCardIndex = this.props.gridItems.findIndex(({ key }) => key === anotherCard.key);
+        const newList = moveArrayElement(
+            props.gridItems,
+            draggedCardIndex,
+            anotherCardIndex,
+        );
 
-            //old version TODO: Adapt
-
-            // console.log("just before moveArrayElement", this.state.newCardList);
-
-            const newList = moveArrayElement(
-                this.props.gridItems,
-                draggedCardIndex,
-                anotherCardIndex,
-            );
-            this.setState({ cards: newList });
-            this.props.updateGrid(newList)
-
-            this.setState({ dndEnabled: false });
-            // return {};
-        }, this.enableDndAfterAnimating);
+        props.updateGrid(newList)
+        setDndEnabled(false)
+        return {};
+        enableDndAfterAnimating()
     };
 
-    onPanResponderEnd = () => {
-        this.updateCardState(this.cardBeingDragged, { isBeingDragged: false });
-        this.cardBeingDragged = undefined;
-      console.log("end!")
+    const onPanResponderEnd = () => {
+        updateCardState(cardBeingDragged, { isBeingDragged: false });
+        setCardBeingDragged(undefined)
+        console.log('end!')
     };
-    onPanResponderGrant = () => {
-        this.updateCardState(this.cardBeingDragged, { isBeingDragged: true });
+    const onPanResponderGrant = () => {
+        updateCardState(cardBeingDragged, { isBeingDragged: true });
         // console.log("card is beeing gragged: TRUE");
     };
-    onMoveShouldSetPanResponder = (gestureState) => {
+    const onMoveShouldSetPanResponder = (gestureState) => {
 
         const { dx, dy, moveX, moveY, numberActiveTouches } = gestureState;
         console.log(dx, dy, moveX, moveY, numberActiveTouches)
@@ -106,11 +86,11 @@ class SortableDraggableGrid extends Component {
         }
 
         // Find the card below user's finger at given coordinates
-        const card = this.findCardAtCoordinates(moveX, moveY);
+        const card = findCardAtCoordinates(moveX, moveY);
         console.log(card)
         if (card) {
             // assign it to `this.cardBeingDragged` while dragging
-            this.cardBeingDragged = card;
+            setCardBeingDragged(card)
 
             // and tell PanResponder to start handling the gesture by calling `onPanResponderMove`
             return true;
@@ -119,36 +99,33 @@ class SortableDraggableGrid extends Component {
         return false;
     };
 
-    findCardAtCoordinates = (x, y, exceptCard) => this.props.gridItems.find(
+    const findCardAtCoordinates = (x, y, exceptCard) => props.gridItems.find(
         (card) =>
             card.tlX && card.tlY && card.brX && card.brY
             && isPointWithinArea(x, y, card.tlX, card.tlY, card.brX, card.brY)
             && (!exceptCard || exceptCard.key !== card.key)
     )
-    updateCardState = (Card, props) => {
-        const index = this.props.gridItems.findIndex(({ key }) => key === Card.key);
-
-        // console.log("index...", index);
+    const updateCardState = (Card, more) => {
+        const index = props.gridItems.findIndex(({ key }) => key === Card.key);
 
         const ReCards = [
-            ...this.props.gridItems.slice(0, index),
+            ...props.gridItems.slice(0, index),
             {
-                ...this.props.gridItems[index],
-                ...props,
+                ...props.gridItems[index],
+                ...more,
             },
-            ...this.props.gridItems.slice(index + 1),
+            ...props.gridItems.slice(index + 1),
         ];
 
-        this.setState({ cards: ReCards });
-        this.props.updateGrid(ReCards)
+        props.updateGrid(ReCards)
 
     };
-    onRenderCard = (card,
-                    screenX,
-                    screenY,
-                    width,
-                    height) => {
-        this.updateCardState(card, {
+    const onRenderCard = (card,
+                          screenX,
+                          screenY,
+                          width,
+                          height) => {
+        updateCardState(card, {
             tlX: screenX,
             tlY: screenY,
             brX: screenX + width,
@@ -156,19 +133,38 @@ class SortableDraggableGrid extends Component {
         });
     };
 
-    render() {
-        return (
-            <View style={styles.container}
-                  {...this.panResponder.panHandlers}
-            >
 
-                {/*<Text>{this.props.animationDuration}</Text>*/}
-                {this.props.gridItems.map((card, index) => {
-                    return <Card onRenderCard={this.onRenderCard} card={card} key={card.key} title={card.title}/>
-                })}
-            </View>
-        );
-    }
+    return (
+        <View style={styles.container}
+              {...panResponder.panHandlers}
+        >
+            <Text>{dndEnabled.toString()}</Text>
+            {/*<Text>{this.props.animationDuration}</Text>*/}
+            {props.gridItems.map((card, index) => {
+                return <Card onRenderCard={onRenderCard} card={card} key={card.key} title={card.title}/>
+            })}
+        </View>
+    );
+
+}
+
+
+SortableDraggableGrid.defaultProps = {
+    gridItems: [
+        { key: 1, title: '1' },
+        { key: 2, title: '2' },
+        { key: 3, title: '3' },
+        { key: 4, title: '4' },
+        { key: 5, title: '5' },
+        { key: 6, title: '6' },
+        { key: 7, title: '7' },
+        { key: 8, title: '8' },
+        { key: 9, title: '9' },
+        { key: 10, title: '10' }]
+}
+
+SortableDraggableGrid.propTypes = {
+
 }
 
 const styles = StyleSheet.create({
@@ -182,5 +178,3 @@ const styles = StyleSheet.create({
     },
 });
 
-
-export default SortableDraggableGrid;

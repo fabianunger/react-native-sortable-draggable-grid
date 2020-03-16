@@ -18,6 +18,7 @@ export default function App() {
         { key: 10, title: '10' }])
 
     const updateGrid = (cards) => {
+        console.log(cards)
         setItems(cards)
     }
 
