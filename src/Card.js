@@ -10,9 +10,7 @@ class Card extends Component {
 
     }
     onLayout = () => {
-
             this.container && this.container.measure(this.onMeasure);
-
     };
     onMeasure = (x,
                  y,

@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
-import { Dimensions, PanResponder, StyleSheet, View, } from 'react-native';
+import { Dimensions, PanResponder, StyleSheet, View,LayoutAnimation} from 'react-native';
 import Card from './Card';
-import { isPointWithinArea } from './_helpers/helpers';
+import { isPointWithinArea , moveArrayElement} from './_helpers/helpers';
 
 class SortableDraggableGrid extends Component {
     static defaultProps = {
         animationDuration: 400
         // animationDuration: 250
     };
+
+    cardBeingDragged
 
     constructor(props) {
         super(props);
@@ -32,12 +34,90 @@ class SortableDraggableGrid extends Component {
     componentWillMount() {
         this.panResponder = this.createPanResponder();
     }
-
+    componentWillUpdate() {
+        LayoutAnimation.configureNext({
+            ...LayoutAnimation.Presets.easeInEaseOut,
+            duration: this.props.animationDuration
+        });
+    }
     createPanResponder = () => PanResponder.create({
         // Handle drag gesture
         onMoveShouldSetPanResponder: (_, gestureState) => this.onMoveShouldSetPanResponder(gestureState),
+        onPanResponderGrant: (_, gestureState) => this.onPanResponderGrant(),
+        onPanResponderMove: (_, gestureState) => this.onPanResponderMove(gestureState),
     });
+    onPanResponderMove = (gestureState) => {
+        const { moveX, moveY } = gestureState;
+        if (!this.state.dndEnabled) {
+            return;
+        }
+        // Find the card we're dragging the current card over
+        const draggedOverCard = this.findCardAtCoordinates(moveX, moveY, this.cardBeingDragged);
+        if (draggedOverCard) {
+            this.swapCards(this.cardBeingDragged, draggedOverCard);
+        }
+    };
+    enableDnd = () => {
+        this.setState({ dndEnabled: true });
+    };
+    enableDndAfterAnimating = () => {
+        setTimeout(this.enableDnd, this.props.animationDuration);
+    };
+    swapCards = (draggedCard, anotherCard) => {
 
+
+        this.setState((state) => {
+            const draggedCardIndex = this.state.cards.findIndex(({ key }) => key === draggedCard.key);
+            const anotherCardIndex = this.state.cards.findIndex(({ key }) => key === anotherCard.key);
+
+            //old version TODO: Adapt
+
+            // console.log("just before moveArrayElement", this.state.newCardList);
+
+            const newList = moveArrayElement(
+                this.state.cards,
+                draggedCardIndex,
+                anotherCardIndex,
+            );
+            this.setState({ cards: newList });
+
+
+
+            this.setState({ dndEnabled: false });
+            // return {};
+        }, this.enableDndAfterAnimating);
+    };
+
+    onPanResponderEnd = () => {
+        this.updateCardState(this.cardBeingDragged, { isBeingDragged: false });
+        this.cardBeingDragged = undefined;
+        console.log('card is beeing gragged: FALSE');
+
+        // HERE UPDATE FIREBASE BY CHECKING THE INDEXES OF THE ARRAY AND UPDATING THE CARDINDEX OF EACH CARD  - CARDINDEX = NEW Object Array Index
+
+        // console.log(this.state.tempSortableContent);
+        // this.props.triggerSetSortContent(this.state.tempSortableContent);
+        //
+        // this.setState({
+        //     cards:
+        // })
+
+        // const listArr = this.props.sortableContent;
+        // console.log("listArr onPanResponderEnd", listArr);
+        // const userRef = firebase.database().ref("users").child(firebase.auth().currentUser.uid);
+
+        // listArr.forEach(c => {
+        //   // console.log("index of "+ c.key.toString() + "    is "+ listArr.indexOf(c));
+        //   userRef
+        //     .child('versions').child(this.props.activeVersion).child("pages").child('content').child(this.props.currentPage).child("cards").child(c.key.toString()).update({i: listArr.indexOf(c)});
+        //
+        //
+        // });
+    };
+    onPanResponderGrant = () => {
+        this.updateCardState(this.cardBeingDragged, { isBeingDragged: true });
+        // console.log("card is beeing gragged: TRUE");
+    };
     onMoveShouldSetPanResponder = (gestureState) => {
 
         const { dx, dy, moveX, moveY, numberActiveTouches } = gestureState;
@@ -85,12 +165,9 @@ class SortableDraggableGrid extends Component {
             },
             ...this.state.cards.slice(index + 1),
         ];
-        // console.log("ReCards",ReCards);
-        //old version TODO: Adapt
-        // this.props.onReorderCards(ReCards);
+
         this.setState({ cards: ReCards });
-        // this.props.triggerSetSortContent(ReCards);
-        // console.log("ReCards - updateCardState");
+
 
     };
     onRenderCard = (card,
